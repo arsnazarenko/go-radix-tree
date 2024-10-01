@@ -1,6 +1,7 @@
 package radix
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,35 +43,33 @@ func TestRadixTreeInsert(t *testing.T) {
 	}
 }
 
-
-
 func TestRadixTreeDelete(t *testing.T) {
 	var testCases = []struct {
-		name  string
+		name        string
 		deletetions []string
-		insertions map[string]int
+		insertions  map[string]int
 	}{
-      {
-      	name:        "Simple deleteion",
-        insertions:  map[string]int{ "rust": 1, "go": 2, "java": 3, "c": 4 },
-      	deletetions: []string{"java"},
-      },
-      {
-      	name:        "Deletion with shared prefix",
-        insertions:  map[string]int{ "bro": 1, "brother": 2, "brotherhood": 3, "brotherbrotherbrother": 4},
-      	deletetions: []string{"brother"},
-      },
-      {
-      	name:        "Delete root",
-        insertions:  map[string]int{"he": 1, "hell": 2, "hello": 3, "helloworld": 4},
-      	deletetions: []string{"he"},
-      },
-      {
-      	name:        "Delete by not existing key",
-        insertions:  map[string]int{ "rust": 1, "go": 2, "java": 3, "c": 4 },
-      	deletetions: []string{"zig"},
-      },
-    }
+		{
+			name:        "Simple deleteion",
+			insertions:  map[string]int{"rust": 1, "go": 2, "java": 3, "c": 4},
+			deletetions: []string{"java"},
+		},
+		{
+			name:        "Deletion with shared prefix",
+			insertions:  map[string]int{"bro": 1, "brother": 2, "brotherhood": 3, "brotherbrotherbrother": 4},
+			deletetions: []string{"brother"},
+		},
+		{
+			name:        "Delete root",
+			insertions:  map[string]int{"he": 1, "hell": 2, "hello": 3, "helloworld": 4},
+			deletetions: []string{"he"},
+		},
+		{
+			name:        "Delete by not existing key",
+			insertions:  map[string]int{"rust": 1, "go": 2, "java": 3, "c": 4},
+			deletetions: []string{"zig"},
+		},
+	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			rt := NewRadixTree[int]()
@@ -78,21 +77,21 @@ func TestRadixTreeDelete(t *testing.T) {
 				rt.Insert(k, v)
 			}
 			for _, delK := range tt.deletetions {
-                rt.Delete(delK)
+				rt.Delete(delK)
 			}
-            for _, d := range tt.deletetions {
-                delete(tt.insertions, d) 
-            }
+			for _, d := range tt.deletetions {
+				delete(tt.insertions, d)
+			}
 
 			for k, expectV := range tt.insertions {
 				realV, ok := rt.Search(k)
 				assert.True(t, ok, "Key %s not found", k)
 				assert.Equal(t, expectV, realV, "Value for key %s mismatch", k)
 			}
-            for _, d := range tt.deletetions {
+			for _, d := range tt.deletetions {
 				_, ok := rt.Search(d)
 				assert.False(t, ok, "Key %s was't deleted", d)
-            }
+			}
 		})
 	}
 }
@@ -127,7 +126,35 @@ var testCases = []struct {
 			"apps":  3,
 		},
 	},
-	{
-	},
+	{},
 }
 
+func BenchmarkRadixTreeInsert(b *testing.B) {
+	rt := NewRadixTree[int]()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rt.Search(fmt.Sprintf("%d", i))
+	}
+}
+
+func BenchmarkRadixTreeSearch(b *testing.B) {
+	rt := NewRadixTree[int]()
+	for i := 0; i < b.N; i++ {
+		rt.Insert(fmt.Sprintf("%d", i), i)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rt.Search(fmt.Sprintf("%d", i))
+	}
+}
+
+func BenchmarkRadixTreeDelete(b *testing.B) {
+	rt := NewRadixTree[int]()
+	for i := 0; i < b.N; i++ {
+		rt.Insert(fmt.Sprintf("%d", i), i)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rt.Delete(fmt.Sprintf("%d", i))
+	}
+}
