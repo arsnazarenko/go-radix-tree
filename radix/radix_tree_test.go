@@ -129,32 +129,63 @@ var testCases = []struct {
 	{},
 }
 
-func BenchmarkRadixTreeInsert(b *testing.B) {
+func createAndFill(num int) *RadixTree[int] {
 	rt := NewRadixTree[int]()
+	for i := 0; i < num; i++ {
+		rt.Insert(fmt.Sprintf("%d", i), i)
+	}
+    return rt
+}
+
+func benchmarkRadixTreeSearchWithSize(b *testing.B, num int) {
+    rt := createAndFill(num)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		rt.Search(fmt.Sprintf("%d", i))
+		rt.Search(fmt.Sprintf("%d", i & num))
+	}
+}
+
+func benchmarkRadixTreeInsertWithSize(b *testing.B, num int) {
+    rt := createAndFill(num)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rt.Insert(fmt.Sprintf("%d", i + num), i + num)
+	}
+}
+
+func benchmarkRadixTreeDeleteWithSize(b *testing.B, num int) {
+    rt := createAndFill(num)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rt.Delete(fmt.Sprintf("%d", i % num))
 	}
 }
 
 func BenchmarkRadixTreeSearch(b *testing.B) {
-	rt := NewRadixTree[int]()
-	for i := 0; i < b.N; i++ {
-		rt.Insert(fmt.Sprintf("%d", i), i)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		rt.Search(fmt.Sprintf("%d", i))
-	}
+    sizes := []int{10, 100, 1000, 10000}
+    for _, s := range sizes {
+        b.Run(fmt.Sprintf("%d", s), func(b *testing.B) {
+            benchmarkRadixTreeSearchWithSize(b, s)
+        })
+    }
 }
 
+
+func BenchmarkRadixTreeInsert(b *testing.B) {
+    sizes := []int{10, 100, 1000, 10000}
+    for _, s := range sizes {
+        b.Run(fmt.Sprintf("%d", s), func(b *testing.B) {
+            benchmarkRadixTreeInsertWithSize(b, s)
+        })
+    }
+}
+
+
 func BenchmarkRadixTreeDelete(b *testing.B) {
-	rt := NewRadixTree[int]()
-	for i := 0; i < b.N; i++ {
-		rt.Insert(fmt.Sprintf("%d", i), i)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		rt.Delete(fmt.Sprintf("%d", i))
-	}
+    sizes := []int{10, 100, 1000, 10000}
+    for _, s := range sizes {
+        b.Run(fmt.Sprintf("%d", s), func(b *testing.B) {
+            benchmarkRadixTreeDeleteWithSize(b, s)
+        })
+    }
 }
